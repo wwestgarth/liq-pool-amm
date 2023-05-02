@@ -1,6 +1,14 @@
 package pool
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+var (
+	ErrNotEnoughBaseAsset  = errors.New("not enough base asset")
+	ErrNotEnoughQuoteAsset = errors.New("not enough quote asset")
+)
 
 type Side int
 
@@ -16,7 +24,7 @@ type CPMM struct {
 	quote uint64 // the asset which can be exchanged for the base asset Y
 }
 
-func NewConstantProuctPool(x, y, k uint64) *CPMM {
+func NewConstantProductPool(x, y, k uint64) *CPMM {
 	return &CPMM{
 		k:     k,
 		base:  x,
@@ -25,7 +33,7 @@ func NewConstantProuctPool(x, y, k uint64) *CPMM {
 }
 
 // GetTrade return a potential trade against this pool give the price and size
-func (p *CPMM) Trade(size uint64, side Side) uint64 {
+func (p *CPMM) Trade(size uint64, side Side) (uint64, error) {
 	// We have:
 	// x * y = k
 
@@ -40,24 +48,40 @@ func (p *CPMM) Trade(size uint64, side Side) uint64 {
 
 	// and eventually:
 	// dy = (y * dx) / (x + dx)
+	fmt.Println(p.base, p.quote, p.k)
 
 	var x, y, dy uint64
 	switch side {
 	case SideBuy:
 		x, y = p.base, p.quote
 		dy = (y * size) / (x + size)
+		fmt.Println("want to buy", size, "of asset X in exchange for", dy, "of Y")
+
+		if size > p.base {
+			return 0, ErrNotEnoughBaseAsset
+		}
 		p.base -= size
 		p.quote += dy
-		fmt.Println("want to buy", size, "of asset X in exchange for", dy, "of Y")
 	case SideSell:
-		fmt.Println("want to sell", size, "of asset X in exchange for Y")
 		x, y = p.quote, p.base
 		dy = (y * size) / (x + size)
+		fmt.Println("want to sell", size, "of asset X in exchange for", dy, "of Y")
+		if dy > p.quote {
+			return 0, ErrNotEnoughQuoteAsset
+		}
 		p.base += size
 		p.quote -= dy
-		fmt.Println("want to sell", size, "of asset X in exchange for", dy, "of Y")
 	default:
 		panic("unknown side")
 	}
-	return dy
+	return dy, nil
+}
+
+// Verify dubg function that just makes sure everything is ok in the pool
+func (p *CPMM) Verify() error {
+	if (p.base * p.quote) != p.k {
+		return fmt.Errorf("pool not constant %d %d %d", p.base, p.quote, p.k)
+	}
+
+	return nil
 }
