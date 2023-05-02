@@ -3,6 +3,7 @@ package pool
 import (
 	"errors"
 	"fmt"
+	"math"
 )
 
 var (
@@ -19,12 +20,12 @@ const ( // iota is reset to 0
 
 type CPMM struct {
 	// x * y = k
-	k     uint64
-	base  uint64 // the asset being purchased or sold X
-	quote uint64 // the asset which can be exchanged for the base asset Y
+	k     float64
+	base  float64 // the asset being purchased or sold X
+	quote float64 // the asset which can be exchanged for the base asset Y
 }
 
-func NewConstantProductPool(x, y, k uint64) *CPMM {
+func NewConstantProductPool(x, y, k float64) *CPMM {
 	return &CPMM{
 		k:     k,
 		base:  x,
@@ -33,7 +34,7 @@ func NewConstantProductPool(x, y, k uint64) *CPMM {
 }
 
 // GetTrade return a potential trade against this pool give the price and size
-func (p *CPMM) Trade(size uint64, side Side) (uint64, error) {
+func (p *CPMM) Trade(size float64, side Side) (float64, error) {
 	// We have:
 	// x * y = k
 
@@ -50,7 +51,7 @@ func (p *CPMM) Trade(size uint64, side Side) (uint64, error) {
 	// dy = (y * dx) / (x + dx)
 	fmt.Println(p.base, p.quote, p.k)
 
-	var x, y, dy uint64
+	var x, y, dy float64
 	switch side {
 	case SideBuy:
 		x, y = p.base, p.quote
@@ -79,8 +80,12 @@ func (p *CPMM) Trade(size uint64, side Side) (uint64, error) {
 
 // Verify dubg function that just makes sure everything is ok in the pool
 func (p *CPMM) Verify() error {
-	if (p.base * p.quote) != p.k {
-		return fmt.Errorf("pool not constant %d %d %d", p.base, p.quote, p.k)
+	// TODO: worry about rounding later
+	tol := float64(0.000000001)
+	diff := math.Abs((p.base * p.quote) - p.k)
+	if diff > tol {
+		fmt.Println(diff, tol)
+		return fmt.Errorf("pool not constant %f %f %f", p.base, p.quote, p.k)
 	}
 
 	return nil

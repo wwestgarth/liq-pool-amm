@@ -1,6 +1,7 @@
 package pool_test
 
 import (
+	"math"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -8,22 +9,23 @@ import (
 	"github.com/wwestgarth/liq-pool-amm/pool"
 )
 
-func scaleUp(s uint64) uint64 {
-	return s * 10000000
+func almostEqual(u, v float64) bool {
+	tol := 0.0000001
+	return math.Abs(v-u) < tol
 }
 
 // TestHelloName calls greetings.Hello with a name, checking
 // for a valid return value.
 func TestConstantProduct(t *testing.T) {
-	nAssets := scaleUp(uint64(100))
+	nAssets := float64(100)
 	p := pool.NewConstantProductPool(nAssets, nAssets, nAssets*nAssets)
 
 	// I want to sell 25 X, how many Y will I get
-	dy, err := p.Trade(scaleUp(50), pool.SideSell)
+	dy, err := p.Trade(50, pool.SideSell)
 	require.NoError(t, err)
 
 	// dy = y*dx/(x + dx)
 	// dy = 150 * 25 / 150 + 25 =
 	require.NoError(t, p.Verify())
-	require.Equal(t, dy, 21.428571428571427)
+	require.True(t, almostEqual(dy, 33.33333333333333))
 }
