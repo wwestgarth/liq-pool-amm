@@ -41,7 +41,7 @@ func (p *CPMM) BestPrice(size float64, side Side) (float64, error) {
 	case SideBuy:
 		x, y = p.base, p.quote
 		dy = (y * size) / (x + size)
-		fmt.Println("want to buy", size, "of asset X in exchange for", dy, "of Y")
+		fmt.Println("want to buy", size, "of base asset, pool will need", dy, "of quote asset")
 
 		if size > p.base {
 			return 0, ErrNotEnoughBaseAsset
@@ -49,7 +49,7 @@ func (p *CPMM) BestPrice(size float64, side Side) (float64, error) {
 	case SideSell:
 		x, y = p.quote, p.base
 		dy = (y * size) / (x + size)
-		fmt.Println("want to sell", size, "of asset X in exchange for", dy, "of Y")
+		fmt.Println("want to sell", size, "of base asset, pool will give", dy, "of quote asset")
 		if dy > p.quote {
 			return 0, ErrNotEnoughQuoteAsset
 		}
@@ -75,14 +75,13 @@ func (p *CPMM) Trade(size float64, side Side) (float64, error) {
 
 	// and eventually:
 	// dy = (y * dx) / (x + dx)
-	fmt.Println(p.base, p.quote, p.k)
 
 	var x, y, dy float64
 	switch side {
 	case SideBuy:
 		x, y = p.base, p.quote
 		dy = (y * size) / (x + size)
-		fmt.Println("want to buy", size, "of asset X in exchange for", dy, "of Y")
+		fmt.Println("trading: receiving", size, "of base asset and giving", dy, "of quote asset")
 
 		if size > p.base {
 			return 0, ErrNotEnoughBaseAsset
@@ -92,7 +91,7 @@ func (p *CPMM) Trade(size float64, side Side) (float64, error) {
 	case SideSell:
 		x, y = p.quote, p.base
 		dy = (y * size) / (x + size)
-		fmt.Println("want to sell", size, "of asset X in exchange for", dy, "of Y")
+		fmt.Println("trading: giving", size, "of asset base asset and receiving", dy, "of quote asset")
 		if dy > p.quote {
 			return 0, ErrNotEnoughQuoteAsset
 		}

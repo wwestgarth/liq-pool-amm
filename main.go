@@ -22,7 +22,8 @@ func (ps *Pools) Add(pool Pool) {
 	ps.pools = append(ps.pools, pool)
 }
 
-func (ps *Pools) Trade(price float64, size float64, side pool.Side) {
+func (ps *Pools) Trade(price float64, size float64, side pool.Side) float64 {
+	fmt.Println("=== START")
 	var bestPool Pool
 	var bestPrice float64
 	found := false
@@ -55,7 +56,7 @@ func (ps *Pools) Trade(price float64, size float64, side pool.Side) {
 
 	if !found {
 		// no trade, it will just sit on the normal order book
-		return
+		return 0
 	}
 
 	dy, err := bestPool.Trade(size, side)
@@ -63,6 +64,10 @@ func (ps *Pools) Trade(price float64, size float64, side pool.Side) {
 		panic("pool gave a best price but then couldn't trade it, should never happen")
 	}
 	fmt.Println("you traded", size, "of the base asset for", dy, "of the quote asset")
+	fmt.Println("=== END")
+	fmt.Println()
+
+	return dy
 }
 
 func main() {
@@ -85,6 +90,12 @@ func main() {
 	pools.Add(pool.NewConstantProductPool(100, 100, 100*100))
 	pools.Add(pool.NewConstantProductPool(125, 100, 125*100))
 
-	// I want to sell 10 of the base asset for 9 of the quote asset
-	pools.Trade(9, 10, pool.SideSell)
+	// I want to buy 10 of the base asset giving the pool 9 of the quote asset
+	startQuoteAsset := float64(9)
+	_ = pools.Trade(startQuoteAsset, 10, pool.SideBuy)
+
+	// now I want sell back my 10 of base asset and get from the pool 9 of the quote asset
+	endOfQuoteAsset := pools.Trade(9, 10, pool.SideSell)
+
+	fmt.Println("started with", startQuoteAsset, "now have", endOfQuoteAsset)
 }
