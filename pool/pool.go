@@ -33,6 +33,32 @@ func NewConstantProductPool(x, y, k float64) *CPMM {
 	}
 }
 
+// BestPrice given an order of size asset X being bought/sold return the change in asset Y
+// i.e the amount that will be received, or will have to be supplied.
+func (p *CPMM) BestPrice(size float64, side Side) (float64, error) {
+	var x, y, dy float64
+	switch side {
+	case SideBuy:
+		x, y = p.base, p.quote
+		dy = (y * size) / (x + size)
+		fmt.Println("want to buy", size, "of asset X in exchange for", dy, "of Y")
+
+		if size > p.base {
+			return 0, ErrNotEnoughBaseAsset
+		}
+	case SideSell:
+		x, y = p.quote, p.base
+		dy = (y * size) / (x + size)
+		fmt.Println("want to sell", size, "of asset X in exchange for", dy, "of Y")
+		if dy > p.quote {
+			return 0, ErrNotEnoughQuoteAsset
+		}
+	default:
+		panic("unknown side")
+	}
+	return dy, nil
+}
+
 // GetTrade return a potential trade against this pool give the price and size
 func (p *CPMM) Trade(size float64, side Side) (float64, error) {
 	// We have:
@@ -76,6 +102,10 @@ func (p *CPMM) Trade(size float64, side Side) (float64, error) {
 		panic("unknown side")
 	}
 	return dy, nil
+}
+
+func (p *CPMM) Prices() (float64, float64) {
+	return p.base / p.quote, p.quote / p.base
 }
 
 // Verify dubg function that just makes sure everything is ok in the pool

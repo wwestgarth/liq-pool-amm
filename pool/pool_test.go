@@ -1,6 +1,7 @@
 package pool_test
 
 import (
+	"fmt"
 	"math"
 	"testing"
 
@@ -11,6 +12,7 @@ import (
 
 func almostEqual(u, v float64) bool {
 	tol := 0.0000001
+	fmt.Println("equality check", u, v)
 	return math.Abs(v-u) < tol
 }
 
@@ -19,6 +21,11 @@ func almostEqual(u, v float64) bool {
 func TestConstantProduct(t *testing.T) {
 	nAssets := float64(100)
 	p := pool.NewConstantProductPool(nAssets, nAssets, nAssets*nAssets)
+
+	// what are the current prices
+	a, b := p.Prices()
+	require.True(t, almostEqual(a, 1))
+	require.True(t, almostEqual(b, 1))
 
 	// I want to sell 25 X, how many Y will I get
 	dy, err := p.Trade(50, pool.SideSell)
